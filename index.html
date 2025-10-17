@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SalesGym Demo</title>
+
+  <!-- Tailwind per CDN (kein Build nötig) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React + ReactDOM per CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+  <!-- Babel für JSX im Browser (einfachste Demo-Variante) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="min-h-screen bg-gray-50 text-gray-900">
+  <div id="root"></div>
+
+  <!-- Unsere App im JSX, direkt inline -->
+  <script type="text/babel">
+    const { useMemo, useState } = React;
+
+    const seedLessons = [
+      { id: 'l1', title: 'Einwandbehandlung Basics', level: 1, desc: 'Grundlagen für Telefonvertrieb in IT-Security' },
+      { id: 'l2', title: 'Terminvereinbarung', level: 1, desc: 'Ziel: 15-Minuten-Discovery-Call sichern' },
+    ];
+
+    function StatCard({ label, value }) {
+      return (
+        <div className="rounded-2xl border p-4 bg-white">
+          <div className="text-3xl font-bold">{value}</div>
+          <div className="text-sm text-gray-500">{label}</div>
+        </div>
+      );
+    }
+
+    function SalesGymDemo() {
+      const [user, setUser] = useState(null);
+      const [xp, setXp] = useState(0);
+      const [streak, setStreak] = useState(0);
+      const [league, setLeague] = useState('Bronze');
+      const [activeTab, setActiveTab] = useState('home'); // 'home' | 'lessons' | 'simulate' | 'leaderboard'
+      const [attempts, setAttempts] = useState([]);
+
+      const leaderboard = useMemo(() => {
+        return [
+          { name: 'Alex', xp: 320 },
+          { name: 'Sam', xp: 280 },
+          { name: user?.name || 'Du', xp },
+        ].sort((a, b) => b.xp - a.xp);
+      }, [user?.name, xp]);
+
+      function fakeLogin() {
+        setUser({ name: 'Sales Hero', team: 'Team A', role: 'member', xp: 0 });
+      }
+
+      function completeCard() {
+        // minimal XP-Regel: 10 + streak*2
+        const delta = 10 + streak * 2;
+        const newXp = xp + delta;
+        setXp(newXp);
+        setStreak(s => s + 1);
+        setAttempts(a => [{ lessonId: 'l1', score: Math.min(10, 6 + streak), when: new Date().toLocaleString() }, ...a]);
+        if (newXp > 400) setLeague('Gold');
+        else if (newXp > 200) setLeague('Silber');
+      }
+
+      function resetStreak() {
+        setStreak(0);
+      }
+
+      return (
+        <div className="min-h-screen">
+          <header className="sticky top-0 z-10 border-b bg-white/80 backdrop-blur">
+            <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+              <div className="font-semibold text-indigo-600">SalesGym (Demo)</div>
+              <nav className="flex gap-4 text-sm">
+                <button className={`hover:underline ${activeTab==='home'?'font-semibold':''}`} onClick={()=>setActiveTab('home')}>Home</button>
+                <button className={`hover:underline ${activeTab==='lessons'?'font-semibold':''}`} onClick={()=>setActiveTab('lessons')}>Lessons</button>
+                <button className={`hover:underline ${activeTab==='simulate'?'font-semibold':''}`} onClick={()=>setActiveTab('simulate')}>Simulation</button>
+                <button className={`hover:underline ${activeTab==='leaderboard'?'font-semibold':''}`} onClick={()=>setActiveTab('leaderboard')}>Leaderboard</button>
+              </nav>
+            </div>
+          </header>
+
+          <main className="mx-auto max-w-5xl p-4">
+            {!user ? (
+              <div className="mx-auto max-w-md rounded-2xl border bg-white p-6">
+                <h1 className="mb-2 text-xl font-semibold">Test-Login</h1>
+                <p className="mb-4 text-sm text-gray-600">Kein Account nötig – Klick unten und du bist drin.</p>
+                <button onClick={fakeLogin} className="rounded-xl bg-indigo-600 px-4 py-2 text-white">Jetzt ausprobieren</button>
+              </div>
+            ) : (
+              <>
+                {activeTab === 'home' && (
+                  <div className="grid gap-6">
+                    <div className="rounded-2xl border bg-white p-6">
+                      <h1 className="text-xl font-semibold">Hi {user.name} 👋</h1>
+                      <p className="text-sm text-gray-600">Rolle: member · Team: {user.team}</p>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <StatCard label="Gesamt-XP" value={xp} />
+                      <StatCard label="Streak" value={streak} />
+                      <StatCard label="Liga" value={league} />
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="rounded-2xl border bg-white p-6">
+                        <h2 className="mb-2 font-semibold">Dein Trainingspfad</h2>
+                        <p className="text-sm text-gray-600">Basierend auf Rolle & Themenfokus.</p>
+                        <div className="mt-3 flex gap-3">
+                          <button onClick={()=>setActiveTab('lessons')} className="rounded-xl border px-3 py-2">Lessons starten</button>
+                          <button onClick={()=>setActiveTab('simulate')} className="rounded-xl bg-indigo-600 px-3 py-2 text-white">Simulation</button>
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border bg-white p-6">
+                        <h2 className="mb-2 font-semibold">Letzte Aktivitäten</h2>
+                        <ul className="text-sm text-gray-700 space-y-2">
+                          {attempts.length === 0 && <li>Noch keine Aktivitäten</li>}
+                          {attempts.map((a, i) => (
+                            <li key={i} className="flex items-center justify-between">
+                              <span>Lesson {a.lessonId} · Score {a.score}/10</span>
+                              <span className="text-gray-500">{a.when}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'lessons' && (
+                  <div className="grid gap-4">
+                    <h1 className="text-xl font-semibold">Lessons</h1>
+                    {seedLessons.map((l) => (
+                      <div key={l.id} className="rounded-xl border bg-white p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-medium">{l.title}</h3>
+                            <p className="text-sm text-gray-600">Level {l.level} · {l.desc}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={completeCard} className="rounded-xl bg-indigo-600 px-3 py-2 text-white">Karte lösen (+XP)</button>
+                            <button onClick={() => setStreak(0)} className="rounded-xl border px-3 py-2">Streak reset</button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <button onClick={()=>setActiveTab('home')} className="mt-2 rounded-xl border px-3 py-2">Zurück</button>
+                  </div>
+                )}
+
+                {activeTab === 'simulate' && (
+                  <div className="rounded-2xl border bg-white p-6">
+                    <h1 className="mb-2 text-xl font-semibold">Simulation (Demo)</h1>
+                    <p className="text-sm text-gray-600">
+                      In Iteration 2 kommt hier das KI-Telefonat mit Scoring. Für jetzt: Geh zu „Lessons“ und sammle XP.
+                    </p>
+                  </div>
+                )}
+
+                {activeTab === 'leaderboard' && (
+                  <div className="rounded-2xl border bg-white p-6">
+                    <h1 className="mb-4 text-xl font-semibold">Leaderboard</h1>
+                    <ol className="grid gap-2">
+                      {leaderboard.map((r, i) => (
+                        <li key={r.name + i} className="flex items-center justify-between rounded-xl border p-3">
+                          <div className="flex items-center gap-3"><span className="w-6 text-right">{i + 1}</span> {r.name}</div>
+                          <div className="font-mono">{r.xp} XP</div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+              </>
+            )}
+          </main>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<SalesGymDemo />);
+  </script>
+</body>
+</html>
