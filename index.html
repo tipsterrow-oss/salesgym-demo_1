@@ -1,189 +1,747 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SalesGym Demo</title>
+Nachfolgend der **komplette Repo‑Inhalt** zum Kopieren nach GitHub. Lege in deinem Repo die gleichen Pfade/Dateien an und füge den Inhalt 1:1 ein.
 
-  <!-- Tailwind per CDN (kein Build nötig) -->
-  <script src="https://cdn.tailwindcss.com"></script>
+Format:
 
-  <!-- React + ReactDOM per CDN -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+=== FILE: <pfad/datei> ===
 
-  <!-- Babel für JSX im Browser (einfachste Demo-Variante) -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-</head>
-<body class="min-h-screen bg-gray-50 text-gray-900">
-  <div id="root"></div>
+---
 
-  <!-- Unsere App im JSX, direkt inline -->
-  <script type="text/babel">
-    const { useMemo, useState } = React;
+=== FILE: package.json ===
+{
+"name": "salesgym",
+"version": "0.2.0",
+"private": true,
+"scripts": {
+"dev": "next dev -p 3000",
+"build": "next build",
+"start": "next start -p 3000",
+"lint": "next lint",
+"test": "vitest",
+"e2e": "playwright test"
+},
+"dependencies": {
+"@supabase/auth-helpers-nextjs": "^0.10.0",
+"@supabase/supabase-js": "^2.45.0",
+"clsx": "^2.1.1",
+"lucide-react": "^0.460.0",
+"next": "^14.2.5",
+"openai": "^4.55.0",
+"react": "^18.3.1",
+"react-dom": "^18.3.1",
+"zod": "^3.23.8"
+},
+"devDependencies": {
+"@playwright/test": "^1.46.0",
+"@types/node": "^20.14.10",
+"@types/react": "^18.3.3",
+"@types/react-dom": "^18.3.0",
+"autoprefixer": "^10.4.19",
+"eslint": "^9.9.0",
+"eslint-config-next": "^14.2.5",
+"postcss": "^8.4.39",
+"prettier": "^3.3.3",
+"tailwindcss": "^3.4.10",
+"typescript": "^5.5.4",
+"vitest": "^2.0.5"
+}
+}
 
-    const seedLessons = [
-      { id: 'l1', title: 'Einwandbehandlung Basics', level: 1, desc: 'Grundlagen für Telefonvertrieb in IT-Security' },
-      { id: 'l2', title: 'Terminvereinbarung', level: 1, desc: 'Ziel: 15-Minuten-Discovery-Call sichern' },
-    ];
+---
 
-    function StatCard({ label, value }) {
-      return (
-        <div className="rounded-2xl border p-4 bg-white">
-          <div className="text-3xl font-bold">{value}</div>
-          <div className="text-sm text-gray-500">{label}</div>
-        </div>
-      );
-    }
+=== FILE: next.config.mjs ===
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+experimental: { serverActions: { allowedOrigins: ["*"] } },
+reactStrictMode: true
+};
+export default nextConfig;
 
-    function SalesGymDemo() {
-      const [user, setUser] = useState(null);
-      const [xp, setXp] = useState(0);
-      const [streak, setStreak] = useState(0);
-      const [league, setLeague] = useState('Bronze');
-      const [activeTab, setActiveTab] = useState('home'); // 'home' | 'lessons' | 'simulate' | 'leaderboard'
-      const [attempts, setAttempts] = useState([]);
+---
 
-      const leaderboard = useMemo(() => {
-        return [
-          { name: 'Alex', xp: 320 },
-          { name: 'Sam', xp: 280 },
-          { name: user?.name || 'Du', xp },
-        ].sort((a, b) => b.xp - a.xp);
-      }, [user?.name, xp]);
+=== FILE: tsconfig.json ===
+{
+"compilerOptions": {
+"target": "ES2020",
+"lib": ["DOM", "ES2020"],
+"jsx": "preserve",
+"module": "ESNext",
+"moduleResolution": "Bundler",
+"resolveJsonModule": true,
+"noEmit": true,
+"strict": true,
+"forceConsistentCasingInFileNames": true,
+"skipLibCheck": true,
+"baseUrl": ".",
+"paths": { "@/*": ["src/*"] }
+},
+"include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+"exclude": ["node_modules"]
+}
 
-      function fakeLogin() {
-        setUser({ name: 'Sales Hero', team: 'Team A', role: 'member', xp: 0 });
-      }
+---
 
-      function completeCard() {
-        // minimal XP-Regel: 10 + streak*2
-        const delta = 10 + streak * 2;
-        const newXp = xp + delta;
-        setXp(newXp);
-        setStreak(s => s + 1);
-        setAttempts(a => [{ lessonId: 'l1', score: Math.min(10, 6 + streak), when: new Date().toLocaleString() }, ...a]);
-        if (newXp > 400) setLeague('Gold');
-        else if (newXp > 200) setLeague('Silber');
-      }
+=== FILE: postcss.config.js ===
+module.exports = {
+plugins: {
+tailwindcss: {},
+autoprefixer: {},
+},
+};
 
-      function resetStreak() {
-        setStreak(0);
-      }
+---
 
-      return (
-        <div className="min-h-screen">
-          <header className="sticky top-0 z-10 border-b bg-white/80 backdrop-blur">
-            <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-              <div className="font-semibold text-indigo-600">SalesGym (Demo)</div>
-              <nav className="flex gap-4 text-sm">
-                <button className={`hover:underline ${activeTab==='home'?'font-semibold':''}`} onClick={()=>setActiveTab('home')}>Home</button>
-                <button className={`hover:underline ${activeTab==='lessons'?'font-semibold':''}`} onClick={()=>setActiveTab('lessons')}>Lessons</button>
-                <button className={`hover:underline ${activeTab==='simulate'?'font-semibold':''}`} onClick={()=>setActiveTab('simulate')}>Simulation</button>
-                <button className={`hover:underline ${activeTab==='leaderboard'?'font-semibold':''}`} onClick={()=>setActiveTab('leaderboard')}>Leaderboard</button>
-              </nav>
-            </div>
-          </header>
+=== FILE: tailwind.config.ts ===
+import type { Config } from 'tailwindcss';
+export default {
+darkMode: ["class"],
+content: ["./src/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
+theme: { extend: {} },
+plugins: []
+} satisfies Config;
 
-          <main className="mx-auto max-w-5xl p-4">
-            {!user ? (
-              <div className="mx-auto max-w-md rounded-2xl border bg-white p-6">
-                <h1 className="mb-2 text-xl font-semibold">Test-Login</h1>
-                <p className="mb-4 text-sm text-gray-600">Kein Account nötig – Klick unten und du bist drin.</p>
-                <button onClick={fakeLogin} className="rounded-xl bg-indigo-600 px-4 py-2 text-white">Jetzt ausprobieren</button>
-              </div>
-            ) : (
-              <>
-                {activeTab === 'home' && (
-                  <div className="grid gap-6">
-                    <div className="rounded-2xl border bg-white p-6">
-                      <h1 className="text-xl font-semibold">Hi {user.name} 👋</h1>
-                      <p className="text-sm text-gray-600">Rolle: member · Team: {user.team}</p>
-                    </div>
+---
 
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <StatCard label="Gesamt-XP" value={xp} />
-                      <StatCard label="Streak" value={streak} />
-                      <StatCard label="Liga" value={league} />
-                    </div>
+=== FILE: .eslintrc.json ===
+{
+"extends": ["next/core-web-vitals"]
+}
 
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="rounded-2xl border bg-white p-6">
-                        <h2 className="mb-2 font-semibold">Dein Trainingspfad</h2>
-                        <p className="text-sm text-gray-600">Basierend auf Rolle & Themenfokus.</p>
-                        <div className="mt-3 flex gap-3">
-                          <button onClick={()=>setActiveTab('lessons')} className="rounded-xl border px-3 py-2">Lessons starten</button>
-                          <button onClick={()=>setActiveTab('simulate')} className="rounded-xl bg-indigo-600 px-3 py-2 text-white">Simulation</button>
-                        </div>
-                      </div>
-                      <div className="rounded-2xl border bg-white p-6">
-                        <h2 className="mb-2 font-semibold">Letzte Aktivitäten</h2>
-                        <ul className="text-sm text-gray-700 space-y-2">
-                          {attempts.length === 0 && <li>Noch keine Aktivitäten</li>}
-                          {attempts.map((a, i) => (
-                            <li key={i} className="flex items-center justify-between">
-                              <span>Lesson {a.lessonId} · Score {a.score}/10</span>
-                              <span className="text-gray-500">{a.when}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                )}
+---
 
-                {activeTab === 'lessons' && (
-                  <div className="grid gap-4">
-                    <h1 className="text-xl font-semibold">Lessons</h1>
-                    {seedLessons.map((l) => (
-                      <div key={l.id} className="rounded-xl border bg-white p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="font-medium">{l.title}</h3>
-                            <p className="text-sm text-gray-600">Level {l.level} · {l.desc}</p>
-                          </div>
-                          <div className="flex gap-2">
-                            <button onClick={completeCard} className="rounded-xl bg-indigo-600 px-3 py-2 text-white">Karte lösen (+XP)</button>
-                            <button onClick={() => setStreak(0)} className="rounded-xl border px-3 py-2">Streak reset</button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    <button onClick={()=>setActiveTab('home')} className="mt-2 rounded-xl border px-3 py-2">Zurück</button>
-                  </div>
-                )}
+=== FILE: .prettierrc ===
+{
+"singleQuote": true,
+"semi": true,
+"trailingComma": "all"
+}
 
-                {activeTab === 'simulate' && (
-                  <div className="rounded-2xl border bg-white p-6">
-                    <h1 className="mb-2 text-xl font-semibold">Simulation (Demo)</h1>
-                    <p className="text-sm text-gray-600">
-                      In Iteration 2 kommt hier das KI-Telefonat mit Scoring. Für jetzt: Geh zu „Lessons“ und sammle XP.
-                    </p>
-                  </div>
-                )}
+---
 
-                {activeTab === 'leaderboard' && (
-                  <div className="rounded-2xl border bg-white p-6">
-                    <h1 className="mb-4 text-xl font-semibold">Leaderboard</h1>
-                    <ol className="grid gap-2">
-                      {leaderboard.map((r, i) => (
-                        <li key={r.name + i} className="flex items-center justify-between rounded-xl border p-3">
-                          <div className="flex items-center gap-3"><span className="w-6 text-right">{i + 1}</span> {r.name}</div>
-                          <div className="font-mono">{r.xp} XP</div>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                )}
-              </>
-            )}
-          </main>
-        </div>
-      );
-    }
+=== FILE: .env.local.example ===
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+OPENAI_API_KEY=your_openai_key
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<SalesGymDemo />);
-  </script>
-</body>
-</html>
+---
+
+=== FILE: supabase/schema.sql ===
+-- Extensions
+create extension if not exists pgcrypto;
+
+-- Users profile mirrors auth.users
+create table if not exists public.users (
+id uuid primary key references auth.users(id) on delete cascade,
+email text not null,
+name text,
+team text,
+role text check (role in ('member','coach','admin')) default 'member',
+experience_level text check (experience_level in ('beginner','intermediate','advanced')) default 'beginner',
+focus_topics text[] default '{}',
+coach_style text check (coach_style in ('direkt','empathisch','spielerisch')) default 'spielerisch',
+created_at timestamp with time zone default now()
+);
+
+create table if not exists public.lessons (
+id uuid primary key default gen_random_uuid(),
+title text not null,
+level_idx int not null default 1,
+description text
+);
+
+create table if not exists public.cards (
+id uuid primary key default gen_random_uuid(),
+lesson_id uuid not null references public.lessons(id) on delete cascade,
+prompt text not null,
+correct_text text not null,
+distractors text[] default '{}',
+info text,
+time_limit int default 60
+);
+
+create table if not exists public.attempts (
+id uuid primary key default gen_random_uuid(),
+user_id uuid not null references public.users(id) on delete cascade,
+card_id uuid references public.cards(id) on delete set null,
+score int check (score between 0 and 10),
+result_json jsonb not null,
+created_at timestamp with time zone default now()
+);
+
+create table if not exists public.xp_transactions (
+id uuid primary key default gen_random_uuid(),
+user_id uuid not null references public.users(id) on delete cascade,
+delta int not null,
+reason text not null,
+meta jsonb,
+created_at timestamp with time zone default now()
+);
+
+create table if not exists public.badges (
+id uuid primary key default gen_random_uuid(),
+code text unique not null,
+label text not null,
+description text
+);
+
+create table if not exists public.user_badges (
+user_id uuid references public.users(id) on delete cascade,
+badge_id uuid references public.badges(id) on delete cascade,
+awarded_at timestamp with time zone default now(),
+primary key (user_id, badge_id)
+);
+
+create table if not exists public.shop_items (
+id uuid primary key default gen_random_uuid(),
+code text unique not null,
+label text not null,
+price int not null,
+meta jsonb
+);
+
+create table if not exists public.purchases (
+id uuid primary key default gen_random_uuid(),
+user_id uuid references public.users(id) on delete cascade,
+item_id uuid references public.shop_items(id) on delete set null,
+created_at timestamp with time zone default now()
+);
+
+create table if not exists public.training_paths (
+id uuid primary key default gen_random_uuid(),
+role text not null,
+topic text not null,
+lesson_ids uuid[] default '{}',
+simulation_ids uuid[] default '{}',
+difficulty text check (difficulty in ('easy','medium','hard')) default 'easy'
+);
+
+-- Leaderboard view
+create materialized view if not exists public.leaderboard as
+select u.id as user_id, coalesce(sum(x.delta),0) as xp
+from public.users u
+left join public.xp_transactions x on x.user_id = u.id
+group by u.id
+order by xp desc;
+
+create or replace function public.refresh_leaderboard() returns void language sql as $$
+refresh materialized view public.leaderboard;
+$$;
+
+-- Trigger: sync auth.users → public.users
+create or replace function public.handle_new_user() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+insert into public.users (id, email, name)
+values (new.id, new.email, coalesce(new.raw_user_meta_data->>'name',''))
+on conflict (id) do nothing;
+return new;
+end; $$;
+
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute function public.handle_new_user();
+
+-- RLS
+alter table public.users enable row level security;
+alter table public.attempts enable row level security;
+alter table public.xp_transactions enable row level security;
+alter table public.user_badges enable row level security;
+alter table public.purchases enable row level security;
+alter table public.lessons enable row level security;
+alter table public.cards enable row level security;
+
+-- Policies
+create policy "users_select_self" on public.users for select using (auth.uid() = id or exists(select 1 from public.users where id = auth.uid() and role='admin'));
+create policy "users_update_self" on public.users for update using (auth.uid() = id);
+
+create policy "attempts_owner_crud" on public.attempts for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "attempts_team_read" on public.attempts for select using (
+exists (
+select 1 from public.users me join public.users u on me.team = u.team
+where me.id = auth.uid() and me.role in ('coach','admin') and attempts.user_id = u.id
+)
+);
+
+create policy "xp_owner_manage" on public.xp_transactions for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "xp_team_read" on public.xp_transactions for select using (
+exists (
+select 1 from public.users me join public.users u on me.team = u.team
+where me.id = auth.uid() and me.role in ('coach','admin') and xp_transactions.user_id = u.id
+)
+);
+
+create policy "content_read_lessons" on public.lessons for select using (auth.role() = 'authenticated');
+create policy "content_admin_write_lessons" on public.lessons for all using (exists(select 1 from public.users where id = auth.uid() and role='admin'));
+create policy "content_read_cards" on public.cards for select using (auth.role() = 'authenticated');
+create policy "content_admin_write_cards" on public.cards for all using (exists(select 1 from public.users where id = auth.uid() and role='admin'));
+
+-- Award XP helper
+create or replace function public.award_xp(p_user uuid, p_delta int, p_reason text, p_meta jsonb default '{}'::jsonb)
+returns void language plpgsql security definer set search_path=public as $$
+begin
+insert into public.xp_transactions(user_id, delta, reason, meta) values (p_user, p_delta, p_reason, p_meta);
+perform public.refresh_leaderboard();
+end; $$;
+
+---
+
+=== FILE: supabase/seed.sql ===
+insert into public.lessons (id, title, level_idx, description) values
+(gen_random_uuid(), 'Einwandbehandlung Basics', 1, 'Grundlagen für Telefonvertrieb in IT-Security'),
+(gen_random_uuid(), 'Terminvereinbarung', 1, 'Ziel: 15-Minuten-Discovery-Call sichern');
+
+insert into public.badges (code, label, description) values
+('pitch_perfect','Pitch Perfect','Starker Elevator Pitch'),
+('objection_slayer','Objection Slayer','3 Einwände in Folge gemeistert'),
+('closer','Closer','3 Abschlüsse in einer Woche');
+
+---
+
+=== FILE: src/lib/supabase/client.ts ===
+'use client';
+import { createBrowserClient } from '@supabase/auth-helpers-nextjs';
+export const supabaseBrowser = () =>
+createBrowserClient(
+process.env.NEXT_PUBLIC_SUPABASE_URL!,
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+);
+
+---
+
+=== FILE: src/lib/supabase/server.ts ===
+import { createServerClient, type CookieOptions } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+
+export function supabaseServer() {
+const cookieStore = cookies();
+return createServerClient(
+process.env.NEXT_PUBLIC_SUPABASE_URL!,
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+{
+cookies: {
+get(name: string) { return cookieStore.get(name)?.value; },
+set(name: string, value: string, options: CookieOptions) { cookieStore.set({ name, value, ...options }); },
+remove(name: string, options: CookieOptions) { cookieStore.set({ name, value: '', ...options }); },
+},
+},
+);
+}
+
+---
+
+=== FILE: src/lib/xp.ts ===
+export function computeXP({ timeLeft = 0, streak = 0 }: { timeLeft?: number; streak?: number }) {
+return Math.max(0, Math.floor(10 + timeLeft / 2 + streak * 2));
+}
+
+---
+
+=== FILE: src/app/layout.tsx ===
+import './globals.css';
+import type { Metadata } from 'next';
+import Link from 'next/link';
+
+export const metadata: Metadata = { title: 'SalesGym', description: 'Telefonvertrieb & IT-Security Training' };
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+return ( <html lang="de"> <body className="min-h-screen bg-gray-50 text-gray-900"> <header className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur"> <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3"> <Link href="/" className="font-semibold text-indigo-600">SalesGym</Link> <nav className="flex gap-4 text-sm"> <Link href="/home">Home</Link> <Link href="/lesson">Lessons</Link> <Link href="/simulate">Simulation</Link> <Link href="/leaderboard">Leaderboard</Link> <Link href="/admin/studio">Admin</Link> </nav> </div> </header> <main className="mx-auto max-w-5xl p-4">{children}</main> </body> </html>
+);
+}
+
+---
+
+=== FILE: src/app/globals.css ===
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light dark; }
+
+---
+
+=== FILE: src/app/page.tsx ===
+import { supabaseServer } from '@/lib/supabase/server';
+import Link from 'next/link';
+
+export default async function Landing() {
+const supabase = supabaseServer();
+const { data: { user } } = await supabase.auth.getUser();
+return ( <div className="grid gap-6"> <h1 className="text-2xl font-semibold">Willkommen im SalesGym 👋</h1> <p>Trainiere Telefonvertrieb für IT-Security & Cyberversicherung – mit KI, Gamification und Audio.</p>
+{user ? ( <Link href="/home" className="inline-flex w-fit rounded-xl bg-indigo-600 px-4 py-2 text-white">Zum Dashboard</Link>
+) : ( <div className="flex gap-3"> <Link href="/sign-in" className="rounded-xl border px-4 py-2">Anmelden</Link> <Link href="/sign-up" className="rounded-xl bg-indigo-600 px-4 py-2 text-white">Account erstellen</Link> </div>
+)} </div>
+);
+}
+
+---
+
+=== FILE: src/app/(auth)/sign-in/page.tsx ===
+'use client';
+import { supabaseBrowser } from '@/lib/supabase/client';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function SignIn() {
+const sb = supabaseBrowser();
+const router = useRouter();
+const [email, setEmail] = useState('');
+const [password, setPassword] = useState('');
+const [err, setErr] = useState<string | null>(null);
+
+async function onSubmit(e: React.FormEvent) {
+e.preventDefault();
+const { error } = await sb.auth.signInWithPassword({ email, password });
+if (error) return setErr(error.message);
+router.replace('/home');
+}
+
+return ( <form onSubmit={onSubmit} className="mx-auto grid max-w-sm gap-4 rounded-2xl border bg-white p-6"> <h1 className="text-xl font-semibold">Anmelden</h1>
+<input className="rounded-xl border p-2" placeholder="E-Mail" value={email} onChange={(e)=>setEmail(e.target.value)} />
+<input className="rounded-xl border p-2" placeholder="Passwort" type="password" value={password} onChange={(e)=>setPassword(e.target.value)} />
+{err && <p className="text-sm text-red-600">{err}</p>} <button className="rounded-xl bg-indigo-600 px-4 py-2 text-white">Login</button> </form>
+);
+}
+
+---
+
+=== FILE: src/app/(auth)/sign-up/page.tsx ===
+'use client';
+import { supabaseBrowser } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+
+export default function SignUp() {
+const sb = supabaseBrowser();
+const router = useRouter();
+const [email, setEmail] = useState('');
+const [password, setPassword] = useState('');
+const [name, setName] = useState('');
+const [err, setErr] = useState<string | null>(null);
+
+async function onSubmit(e: React.FormEvent) {
+e.preventDefault();
+const { error } = await sb.auth.signUp({ email, password, options: { data: { name } } });
+if (error) return setErr(error.message);
+router.replace('/home');
+}
+
+return ( <form onSubmit={onSubmit} className="mx-auto grid max-w-sm gap-4 rounded-2xl border bg-white p-6"> <h1 className="text-xl font-semibold">Account erstellen</h1>
+<input className="rounded-xl border p-2" placeholder="Name" value={name} onChange={(e)=>setName(e.target.value)} />
+<input className="rounded-xl border p-2" placeholder="E-Mail" value={email} onChange={(e)=>setEmail(e.target.value)} />
+<input className="rounded-xl border p-2" placeholder="Passwort" type="password" value={password} onChange={(e)=>setPassword(e.target.value)} />
+{err && <p className="text-sm text-red-600">{err}</p>} <button className="rounded-xl bg-indigo-600 px-4 py-2 text-white">Registrieren</button> </form>
+);
+}
+
+---
+
+=== FILE: src/app/home/page.tsx ===
+import { supabaseServer } from '@/lib/supabase/server';
+import Link from 'next/link';
+
+export default async function Home() {
+const supabase = supabaseServer();
+const { data: { user } } = await supabase.auth.getUser();
+if (!user) {
+return ( <div className="rounded-xl border bg-white p-6"> <p>Bitte anmelden.</p> <Link className="mt-3 inline-flex rounded-xl bg-indigo-600 px-3 py-2 text-white" href="/sign-in">Zum Login</Link> </div>
+);
+}
+
+const { data: profile } = await supabase
+.from('users')
+.select('name, team, role, experience_level')
+.eq('id', user.id)
+.single();
+
+const { data: xpSum } = await supabase
+.from('xp_transactions')
+.select('delta')
+.eq('user_id', user.id);
+const xp = xpSum?.reduce((a, b) => a + (b as any).delta, 0) ?? 0;
+
+return ( <div className="grid gap-6"> <div className="rounded-2xl border bg-white p-6"> <h1 className="text-xl font-semibold">Hi {profile?.name ?? 'Sales Hero'} 👋</h1> <p className="text-sm text-gray-600">Rolle: {profile?.role ?? 'member'} · Team: {profile?.team ?? 'n/a'} · Level: {profile?.experience_level ?? 'beginner'}</p> </div>
+
+```
+  <div className="grid gap-4 md:grid-cols-3">
+    <div className="rounded-2xl border bg-white p-5"><p className="text-3xl font-bold">{xp}</p><p className="text-sm text-gray-500">Gesamt-XP</p></div>
+    <div className="rounded-2xl border bg-white p-5"><p className="text-3xl font-bold">0</p><p className="text-sm text-gray-500">Streak</p></div>
+    <div className="rounded-2xl border bg-white p-5"><p className="text-3xl font-bold">Bronze</p><p className="text-sm text-gray-500">Liga</p></div>
+  </div>
+
+  <div className="grid gap-4 md:grid-cols-2">
+    <div className="rounded-2xl border bg-white p-6">
+      <h2 className="mb-2 font-semibold">Dein Trainingspfad</h2>
+      <p className="text-sm text-gray-600">Basierend auf Rolle & Themenfokus.</p>
+      <div className="mt-3 flex gap-3">
+        <Link href="/lesson" className="rounded-xl border px-3 py-2">Lessons starten</Link>
+        <Link href="/simulate" className="rounded-xl bg-indigo-600 px-3 py-2 text-white">Simulation</Link>
+      </div>
+    </div>
+    <div className="rounded-2xl border bg-white p-6">
+      <h2 className="mb-2 font-semibold">Letzte Aktivitäten</h2>
+      <p className="text-sm text-gray-600">Hier siehst du bald deine letzten Versuche & Scores.</p>
+    </div>
+  </div>
+</div>
+```
+
+);
+}
+
+---
+
+=== FILE: src/app/leaderboard/page.tsx ===
+import { supabaseServer } from '@/lib/supabase/server';
+
+export default async function Leaderboard() {
+const sb = supabaseServer();
+const { data } = await sb.from('leaderboard').select('user_id, xp').order('xp', { ascending: false }).limit(25);
+const { data: users } = await sb.from('users').select('id, name');
+const nameById = new Map(users?.map(u => [u.id, (u as any).name ?? 'User']) ?? []);
+return ( <div className="rounded-2xl border bg-white p-6"> <h1 className="mb-4 text-xl font-semibold">Leaderboard</h1> <ol className="grid gap-2">
+{data?.map((r: any, i: number) => ( <li key={r.user_id} className="flex items-center justify-between rounded-xl border p-3"> <div className="flex items-center gap-3"><span className="w-6 text-right">{i+1}</span> {nameById.get(r.user_id)}</div> <div className="font-mono">{r.xp} XP</div> </li>
+))} </ol> </div>
+);
+}
+
+---
+
+=== FILE: src/app/lesson/page.tsx ===
+import { supabaseServer } from '@/lib/supabase/server';
+
+export default async function Lessons() {
+const sb = supabaseServer();
+const { data: lessons } = await sb.from('lessons').select('id, title, level_idx, description');
+return ( <div className="grid gap-4"> <h1 className="text-xl font-semibold">Lessons</h1> <div className="grid gap-3">
+{lessons?.map((l: any) => ( <div key={l.id} className="rounded-xl border bg-white p-4"> <h3 className="font-medium">{l.title}</h3> <p className="text-sm text-gray-600">Level {l.level_idx} · {l.description}</p> </div>
+))} </div> </div>
+);
+}
+
+---
+
+=== FILE: src/app/simulate/page.tsx ===
+'use client';
+import { useState } from 'react';
+
+export default function Simulate() {
+const [log, setLog] = useState<string[]>(["KI (IT‑Leitung, skeptisch): Guten Tag, ich bin gerade in einem Termin. Worum geht's? (max. 2 Sätze)"]);
+const [input, setInput] = useState('');
+const [loading, setLoading] = useState(false);
+
+async function send() {
+if (!input.trim()) return;
+const userMsg = `Du: ${input.trim()}`;
+setLog((l) => [...l, userMsg]);
+setInput('');
+setLoading(true);
+try {
+const res = await fetch('/api/simulate', { method: 'POST', body: JSON.stringify({ history: log.concat(userMsg).slice(-8) }) });
+const data = await res.json();
+setLog((l) => [...l, `KI: ${data.reply}`]);
+} finally {
+setLoading(false);
+}
+}
+
+async function score() {
+setLoading(true);
+try {
+const res = await fetch('/api/score', { method: 'POST', body: JSON.stringify({ transcript: log.join('\n') }) });
+const data = await res.json();
+setLog((l) => [...l, `\n— Scoring —`, JSON.stringify(data, null, 2)]);
+} finally { setLoading(false); }
+}
+
+return ( <div className="rounded-2xl border bg-white p-6"> <h1 className="mb-2 text-xl font-semibold">Simulation</h1> <div className="mb-3 h-72 overflow-auto rounded-xl border p-3 font-mono text-sm whitespace-pre-wrap">{log.join('\n\n')}</div> <div className="flex gap-2">
+<input className="flex-1 rounded-xl border px-3 py-2" placeholder="Deine Antwort (max. 2 Sätze)" value={input} onChange={(e)=>setInput(e.target.value)} onKeyDown={(e)=> e.key==='Enter' && send()} /> <button onClick={send} disabled={loading} className="rounded-xl bg-indigo-600 px-3 py-2 text-white">Senden</button> <button onClick={score} disabled={loading} className="rounded-xl border px-3 py-2">Scoring</button> </div> </div>
+);
+}
+
+---
+
+=== FILE: src/app/api/simulate/route.ts ===
+import { NextRequest, NextResponse } from 'next/server';
+import OpenAI from 'openai';
+
+const SYSTEM = `Du bist ein Entscheider im DACH‑Markt (IT‑Leitung), sprichst Deutsch, bist freundlich aber skeptisch. Ziel des Anrufers: 15‑Minuten‑Termin für eine Angriffssimulation im IT‑Security‑Kontext. Regeln: antworte kurz (max. 2 Sätze), stelle typische Einwände (keine Zeit, schon Dienstleister, DSGVO), variiere Stimmung leicht. Halte Gespräch natürlich.`;
+
+export async function POST(req: NextRequest) {
+const { history } = await req.json();
+const key = process.env.OPENAI_API_KEY;
+
+// Fallback ohne API‑Key (lokales Mocking)
+if (!key) {
+const canned = [
+'Klingt interessant, aber diese Woche ist voll. Wie wäre es nächste Woche Dienstag um 10?',
+'Wir haben bereits einen Anbieter. Was unterscheidet Sie konkret in 20 Sekunden?',
+'Wenn Datenschutz und Aufwand gering sind, können wir kurz sprechen. Haben Sie morgen 15 Minuten?'
+];
+const reply = canned[Math.floor(Math.random()*canned.length)];
+return NextResponse.json({ reply, mock: true });
+}
+
+const client = new OpenAI({ apiKey: key });
+const messages = [
+{ role: 'system', content: SYSTEM },
+...history.map((h: string) => ({ role: h.startsWith('Du:') ? 'user' as const : 'assistant' as const, content: h.replace(/^Du:\s?/, '') }))
+];
+
+const res = await client.chat.completions.create({
+model: 'gpt-4o-mini',
+temperature: 0.7,
+messages
+});
+const reply = res.choices[0]?.message?.content ?? 'Okay.';
+return NextResponse.json({ reply });
+}
+
+---
+
+=== FILE: src/app/api/score/route.ts ===
+import { NextRequest, NextResponse } from 'next/server';
+import OpenAI from 'openai';
+
+const SCORING_PROMPT = `Du bist Senior Sales Coach. Bewerte eine Antwort auf einen Einwand.
+Kategorien (0–10): Gesprächsführung, Überzeugungskraft, Einwandbehandlung, Abschlusswahrscheinlichkeit.
+Gib ausschließlich JSON zurück:
+{
+  "scores": {"gespraech":0, "ueberzeugung":0, "einwand":0, "abschluss":0},
+  "summary": "Kurzfeedback",
+  "tips": ["konkreter Tipp 1", "konkreter Tipp 2"]
+}`;
+
+export async function POST(req: NextRequest) {
+const { transcript } = await req.json();
+const key = process.env.OPENAI_API_KEY;
+
+if (!key) {
+return NextResponse.json({
+scores: { gespraech: 6, ueberzeugung: 6, einwand: 5, abschluss: 5 },
+summary: 'Solide Struktur, noch konkreter Nutzen nennen.',
+tips: ['Mit einer Frage starten', 'Vereinbare nächsten Schritt mit konkreter Uhrzeit']
+});
+}
+
+const client = new OpenAI({ apiKey: key });
+const res = await client.chat.completions.create({
+model: 'gpt-4o-mini',
+temperature: 0.2,
+messages: [
+{ role: 'system', content: SCORING_PROMPT },
+{ role: 'user', content: transcript?.slice?.(0, 6000) || '' }
+]
+});
+
+// Best effort JSON parse
+const text = res.choices[0]?.message?.content ?? '{}';
+try {
+const json = JSON.parse(text);
+return NextResponse.json(json);
+} catch {
+return NextResponse.json({ raw: text });
+}
+}
+
+---
+
+=== FILE: src/app/admin/studio/page.tsx ===
+'use client';
+import { supabaseBrowser } from '@/lib/supabase/client';
+import { useEffect, useState } from 'react';
+
+export default function Studio() {
+const sb = supabaseBrowser();
+const [title, setTitle] = useState('');
+const [desc, setDesc] = useState('');
+const [lessons, setLessons] = useState<any[]>([]);
+const [err, setErr] = useState<string | null>(null);
+
+async function load() {
+const { data } = await sb.from('lessons').select('id,title,description,level_idx').order('created_at', { ascending: false });
+setLessons(data ?? []);
+}
+useEffect(()=>{ load(); }, []);
+
+async function createLesson() {
+setErr(null);
+const { error } = await sb.from('lessons').insert({ title, description: desc, level_idx: 1 });
+if (error) setErr(error.message); else { setTitle(''); setDesc(''); load(); }
+}
+
+return ( <div className="grid gap-6"> <h1 className="text-xl font-semibold">Admin Studio</h1> <div className="rounded-2xl border bg-white p-6 grid gap-3"> <h2 className="font-medium">Neue Lesson</h2>
+<input className="rounded-xl border p-2" placeholder="Titel" value={title} onChange={(e)=>setTitle(e.target.value)} />
+<textarea className="rounded-xl border p-2" placeholder="Beschreibung" value={desc} onChange={(e)=>setDesc(e.target.value)} />
+{err && <p className="text-sm text-red-600">{err}</p>} <button onClick={createLesson} className="w-fit rounded-xl bg-indigo-600 px-4 py-2 text-white">Speichern</button> </div> <div className="rounded-2xl border bg-white p-6"> <h2 className="mb-2 font-medium">Lessons</h2> <ul className="space-y-2">
+{lessons.map((l) => ( <li key={l.id} className="flex items-center justify-between rounded-xl border p-3"> <div> <div className="font-medium">{l.title}</div> <div className="text-sm text-gray-600">{l.description}</div> </div> </li>
+))} </ul> </div> </div>
+);
+}
+
+---
+
+=== FILE: src/middleware.ts ===
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+const PROTECTED = ['/home', '/lesson', '/simulate', '/leaderboard', '/admin'];
+
+export async function middleware(req: NextRequest) {
+const url = new URL(req.nextUrl);
+if (!PROTECTED.some((p) => url.pathname.startsWith(p))) return NextResponse.next();
+const hasSession = req.cookies.get('sb-access-token');
+if (!hasSession) {
+const loginUrl = new URL('/sign-in', req.url);
+loginUrl.searchParams.set('redirect', url.pathname);
+return NextResponse.redirect(loginUrl);
+}
+return NextResponse.next();
+}
+
+export const config = { matcher: ['/home/:path*', '/lesson/:path*', '/simulate/:path*', '/leaderboard/:path*', '/admin/:path*'] };
+
+---
+
+=== FILE: README.md ===
+
+# SalesGym – Vollständiger Code (Iteration 1–2)
+
+**Was ist drin?**
+
+* Next.js App Router (TS), Tailwind ready
+* Supabase Auth + RLS, Tabellen/Migrations (schema.sql, seed.sql)
+* Screens: Landing, Sign‑In/Up, Home, Lessons, Leaderboard, Admin‑Studio
+* Simulation (Text) + Scoring‑API (OpenAI) inkl. Mock, wenn kein Key gesetzt ist
+* XP‑Formel (Helper)
+
+## Setup (5 Schritte)
+
+1. **Repo klonen & Dependencies**
+
+   ```bash
+   npm install
+   ```
+2. **.env.local** anlegen (siehe `.env.local.example`)
+3. **Supabase Projekt** erstellen (EU) und SQLs aus `supabase/schema.sql` und `supabase/seed.sql` ausführen
+4. **Dev‑Server** starten
+
+   ```bash
+   npm run dev
+   ```
+5. **Test**: Sign‑Up → /home → Lessons; /simulate testen; /api/score liefert JSON
+
+## Mini‑Testplan
+
+* [ ] Sign‑Up erzeugt Eintrag in `public.users` (Trigger)
+* [ ] Lessons laden Seeds
+* [ ] /simulate liefert Antworten (mit OPENAI_API_KEY) oder Mock
+* [ ] /api/score gibt JSON im geforderten Schema zurück
+* [ ] Leaderboard zeigt XP nach `select public.award_xp('<user>', 50, 'Test', '{}');`
+
+## Deploy
+
+* Vercel importieren → Env Vars setzen → Deploy
+
+## Nächste Iteration
+
+* Audio (Whisper/TTS), Badges Logic, Coach‑Dashboard (Team‑Filter), Admin‑Forms (Cards CRUD)
